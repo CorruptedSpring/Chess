@@ -2,7 +2,6 @@ import pygame
 
 SquareSize = 80
 BoardSize = SquareSize * 8
-
 def LoadPieces():
     Pieces = {}
     PieceNames = {

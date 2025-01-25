@@ -4,7 +4,6 @@ import random
 from others.pieces import *
 from gui.sprites import *
 from gui.sprites import SquareSize, BoardSize
-
 class GameState:
     def __init__(self):
         self.Board = InitializeBoard()
@@ -180,6 +179,10 @@ def Main():
                             
                             if Piece.endswith('P') and (Row == 0 or Row == 7):
                                 GameInstance.Board[Row][Col] = Piece[0] + 'Q'
+                            Color = 'White' if Piece[0] == 'W' else 'Black'
+                            if (Selected[0], Selected[1]) in GameInstance.JokerPieces[Color]['positions']:
+                                del GameInstance.JokerPieces[Color]['positions'][(Selected[0], Selected[1])]
+                                del GameInstance.JokerPieces[Color]['movements'][(Selected[0], Selected[1])]
                             
                             GameInstance.CurrentPlayer = 'Black' if GameInstance.CurrentPlayer == 'White' else 'White'
                         Selected = None

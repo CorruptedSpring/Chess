@@ -4,7 +4,6 @@ def GetValidMoves(PieceType, CurrentPos, Board, CastlingRights=None, EnPassantTa
     
     if JokerPieces and CurrentPos in JokerPieces[Color]['positions']:
         PieceChar = JokerPieces[Color]['movements'][CurrentPos]
-    
     if PieceChar == 'P':
         return PawnMoves(CurrentPos, Board, PieceType.startswith('W'), EnPassantTarget)
     elif PieceChar == 'N':
