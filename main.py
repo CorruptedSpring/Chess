@@ -151,6 +151,7 @@ def Main():
     PiecesSprites = LoadPieces()
     Selected = None
     ValidMoves = []
+    FirstMove = True
     
     Running = True
     while Running:
@@ -179,10 +180,10 @@ def Main():
                             
                             if Piece.endswith('P') and (Row == 0 or Row == 7):
                                 GameInstance.Board[Row][Col] = Piece[0] + 'Q'
-                            Color = 'White' if Piece[0] == 'W' else 'Black'
-                            if (Selected[0], Selected[1]) in GameInstance.JokerPieces[Color]['positions']:
-                                del GameInstance.JokerPieces[Color]['positions'][(Selected[0], Selected[1])]
-                                del GameInstance.JokerPieces[Color]['movements'][(Selected[0], Selected[1])]
+                            
+                            if FirstMove and GameInstance.CurrentPlayer == 'White':
+                                GameInstance.JokerPieces = {'White': {'positions': {}, 'movements': {}}, 'Black': {'positions': {}, 'movements': {}}}
+                                FirstMove = False
                             
                             GameInstance.CurrentPlayer = 'Black' if GameInstance.CurrentPlayer == 'White' else 'White'
                         Selected = None
