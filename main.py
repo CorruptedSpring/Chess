@@ -28,7 +28,6 @@ class GameState:
         
         for Color in ['White', 'Black']:
             SelectedTypes = random.sample(PieceTypes, 2)
-            print(f"{Color} selected joker types: {SelectedTypes}")
             
             for i, PieceType in enumerate(SelectedTypes):
                 Pieces = []
@@ -61,8 +60,7 @@ def InitializeBoard():
     return board
 
 def PrintBoard(board):
-    for row in board:
-        print(' '.join([piece.ljust(3) for piece in row]))
+    pass
 
 def IsValidMove(board, start_pos, end_pos, current_player, joker_pieces):
     piece = board[start_pos[0]][start_pos[1]]
@@ -77,8 +75,6 @@ def IsValidMove(board, start_pos, end_pos, current_player, joker_pieces):
     temp_board[end_pos[0]][end_pos[1]] = piece
     temp_board[start_pos[0]][start_pos[1]] = 'Empty'
     
-    if start_pos in joker_pieces[current_player]['positions']:
-        print(f"Valid moves for joker {piece} at {start_pos}: {valid_moves}")
     
     return not IsInCheck(temp_board, current_player == 'White')
 

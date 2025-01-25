@@ -44,8 +44,6 @@ def PawnMoves(Pos, Board, IsWhite, EnPassantTarget=None):
         if Row == (3 if IsWhite else 4):
             if abs(Col - EnPassantTarget[1]) == 1:
                 Moves.append(EnPassantTarget)
-    
-    print(f"Pawn moves from {Pos}: {Moves}")
     return Moves
 
 def KnightMoves(Pos, Board):
@@ -58,8 +56,6 @@ def KnightMoves(Pos, Board):
         if 0 <= NewRow < 8 and 0 <= NewCol < 8:
             if Board[NewRow][NewCol] == 'Empty' or Board[NewRow][NewCol][0] != Board[Row][Col][0]:
                 Moves.append((NewRow, NewCol))
-    
-    print(f"Knight moves from {Pos}: {Moves}")
     return Moves
 
 def BishopMoves(Pos, Board):
@@ -79,15 +75,11 @@ def BishopMoves(Pos, Board):
             else:
                 break
             NewRow, NewCol = NewRow + Drow, NewCol + Dcol
-    
-    print(f"Bishop moves from {Pos}: {Moves}")
     return Moves
-
 def RookMoves(Pos, Board):
     Moves = []
     Row, Col = Pos
     Directions = [(0,1), (0,-1), (1,0), (-1,0)]
-    
     for Drow, Dcol in Directions:
         NewRow, NewCol = Row + Drow, Col + Dcol
         while 0 <= NewRow < 8 and 0 <= NewCol < 8:
@@ -100,13 +92,10 @@ def RookMoves(Pos, Board):
             else:
                 break
             NewRow, NewCol = NewRow + Drow, NewCol + Dcol
-    
-    print(f"Rook moves from {Pos}: {Moves}")
     return Moves
 
 def QueenMoves(Pos, Board):
     Moves = RookMoves(Pos, Board) + BishopMoves(Pos, Board)
-    print(f"Queen moves from {Pos}: {Moves}")
     return Moves
 
 def KingMoves(Pos, Board):
@@ -120,8 +109,6 @@ def KingMoves(Pos, Board):
             Target = Board[NewRow][NewCol]
             if Target == 'Empty' or Target[0] != Board[Row][Col][0]:
                 Moves.append((NewRow, NewCol))
-    
-    print(f"King moves from {Pos}: {Moves}")
     return Moves
 
 def GetCastlingMoves(Pos, Board, CastlingRights, IsWhite):
