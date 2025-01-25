@@ -1,7 +1,7 @@
 import numpy as np
 import pygame
 import random
-from others.pieces import *
+from pieces import *
 from gui.sprites import *
 from gui.sprites import SquareSize, BoardSize
 class GameState:
@@ -134,13 +134,9 @@ def DrawBoard(screen, board, pieces_sprites, selected=None, valid_moves=None, ga
                 if game_instance:
                     color = 'White' if piece[0] == 'W' else 'Black'
                     if (row, col) in game_instance.JokerPieces[color]['positions']:
-                        center_red = (col * SquareSize + SquareSize - 15, 
-                                    row * SquareSize + SquareSize - 15)
-                        pygame.draw.circle(screen, (255, 0, 0), center_red, 5)
-                        
-                        center_green = (col * SquareSize + SquareSize - 15, 
-                                      row * SquareSize + SquareSize - 30)
-                        pygame.draw.circle(screen, (0, 255, 0), center_green, 5)
+                        center_transparent = (col * SquareSize + SquareSize - 15, 
+                                              row * SquareSize + SquareSize - 45)
+                        pygame.draw.circle(screen, (0, 0, 255, 128), center_transparent, 5)
 
 def Main():
     pygame.init()
@@ -152,7 +148,7 @@ def Main():
     Selected = None
     ValidMoves = []
     FirstMove = True
-    
+
     Running = True
     while Running:
         for Event in pygame.event.get():
@@ -182,8 +178,21 @@ def Main():
                                 GameInstance.Board[Row][Col] = Piece[0] + 'Q'
                             
                             if FirstMove and GameInstance.CurrentPlayer == 'White':
-                                GameInstance.JokerPieces = {'White': {'positions': {}, 'movements': {}}, 'Black': {'positions': {}, 'movements': {}}}
                                 FirstMove = False
+                            else:
+                                # Preserve joker piece movements even if one is captured
+                                for color in ['White', 'Black']:
+                                    for pos in list(GameInstance.JokerPieces[color]['positions'].keys()):
+                                        if GameInstance.Board[pos[0]][pos[1]] == 'Empty':
+                                            if pos in GameInstance.JokerPieces[color]['positions']:
+                                                del GameInstance.JokerPieces[color]['positions'][pos]
+                                            if pos in GameInstance.JokerPieces[color]['movements']:
+                                                del GameInstance.JokerPieces[color]['movements'][pos]
+                                        elif (Selected[0], Selected[1]) in GameInstance.JokerPieces[color]['positions']:
+                                            # Update the position of the joker piece
+                                            GameInstance.JokerPieces[color]['positions'][(Row, Col)] = GameInstance.JokerPieces[color]['positions'].pop((Selected[0], Selected[1]))
+                                            GameInstance.JokerPieces[color]['movements'][(Row, Col)] = GameInstance.JokerPieces[color]['movements'].pop((Selected[0], Selected[1]))
+                                            break  # Ensure only the moved joker piece is updated
                             
                             GameInstance.CurrentPlayer = 'Black' if GameInstance.CurrentPlayer == 'White' else 'White'
                         Selected = None

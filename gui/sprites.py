@@ -15,7 +15,7 @@ def LoadPieces():
     
     for Color in ['W', 'B']:
         for Code, Name in PieceNames.items():
-            ImagePath = f'gui/assets/pieces/{Color}{Name}.png'
+            ImagePath = f'gui/assets/{Color}{Name}.png'
             Image = pygame.image.load(ImagePath)
             Image = pygame.transform.scale(Image, (SquareSize, SquareSize))
             Pieces[Color + Code] = Image
