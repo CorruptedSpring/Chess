@@ -1,225 +1,165 @@
-def GetValidMoves(PieceType, CurrentPos, Board, CastlingRights=None, EnPassantTarget=None, JokerPieces=None):
-    Color = 'White' if PieceType.startswith('W') else 'Black'
-    PieceChar = PieceType[1]
-    
-    if JokerPieces and CurrentPos in JokerPieces[Color]['positions']:
-        PieceChar = JokerPieces[Color]['movements'][CurrentPos]
-    if PieceChar == 'P':
-        return PawnMoves(CurrentPos, Board, PieceType.startswith('W'), EnPassantTarget)
-    elif PieceChar == 'N':
-        return KnightMoves(CurrentPos, Board)
-    elif PieceChar == 'B':
-        return BishopMoves(CurrentPos, Board)
-    elif PieceChar == 'R':
-        return RookMoves(CurrentPos, Board)
-    elif PieceChar == 'Q':
-        return QueenMoves(CurrentPos, Board)
-    elif PieceChar == 'K':
-        Moves = KingMoves(CurrentPos, Board)
-        if CastlingRights:
-            Moves += GetCastlingMoves(CurrentPos, Board, CastlingRights, PieceType.startswith('W'))
-        return Moves
-    return []
+import numpy as np
 
-def PawnMoves(Pos, Board, IsWhite, EnPassantTarget=None):
-    Moves = []
-    Direction = -1 if IsWhite else 1
-    Row, Col = Pos
-    
-    if 0 <= Row + Direction < 8 and Board[Row + Direction][Col] == 'Empty':
-        Moves.append((Row + Direction, Col))
-        if (IsWhite and Row == 6) or (not IsWhite and Row == 1):
-            if Board[Row + 2*Direction][Col] == 'Empty':
-                Moves.append((Row + 2*Direction, Col))
-    
-    for Dcol in [-1, 1]:
-        NewCol = Col + Dcol
-        if 0 <= NewCol < 8 and 0 <= Row + Direction < 8:
-            Target = Board[Row + Direction][NewCol]
-            if Target != 'Empty' and Target[0] != ('W' if IsWhite else 'B'):
-                Moves.append((Row + Direction, NewCol))
-    
-    if EnPassantTarget:
-        if Row == (3 if IsWhite else 4):
-            if abs(Col - EnPassantTarget[1]) == 1:
-                Moves.append(EnPassantTarget)
-    return Moves
+# Remove the import from chess_logic to break circular dependency
+# from chess_logic import get_piece_movement_type
 
-def KnightMoves(Pos, Board):
-    Moves = []
-    Row, Col = Pos
-    Offsets = [(2,1), (2,-1), (-2,1), (-2,-1), (1,2), (1,-2), (-1,2), (-1,-2)]
-    
-    for Drow, Dcol in Offsets:
-        NewRow, NewCol = Row + Drow, Col + Dcol
-        if 0 <= NewRow < 8 and 0 <= NewCol < 8:
-            if Board[NewRow][NewCol] == 'Empty' or Board[NewRow][NewCol][0] != Board[Row][Col][0]:
-                Moves.append((NewRow, NewCol))
-    return Moves
+EMPTY = 0
 
-def BishopMoves(Pos, Board):
-    Moves = []
-    Row, Col = Pos
-    Directions = [(1,1), (1,-1), (-1,1), (-1,-1)]
-    
-    for Drow, Dcol in Directions:
-        NewRow, NewCol = Row + Drow, Col + Dcol
-        while 0 <= NewRow < 8 and 0 <= NewCol < 8:
-            Target = Board[NewRow][NewCol]
-            if Target == 'Empty':
-                Moves.append((NewRow, NewCol))
-            elif Target[0] != Board[Row][Col][0]:
-                Moves.append((NewRow, NewCol))
-                break
-            else:
-                break
-            NewRow, NewCol = NewRow + Drow, NewCol + Dcol
-    return Moves
-def RookMoves(Pos, Board):
-    Moves = []
-    Row, Col = Pos
-    Directions = [(0,1), (0,-1), (1,0), (-1,0)]
-    for Drow, Dcol in Directions:
-        NewRow, NewCol = Row + Drow, Col + Dcol
-        while 0 <= NewRow < 8 and 0 <= NewCol < 8:
-            Target = Board[NewRow][NewCol]
-            if Target == 'Empty':
-                Moves.append((NewRow, NewCol))
-            elif Target[0] != Board[Row][Col][0]:
-                Moves.append((NewRow, NewCol))
-                break
-            else:
-                break
-            NewRow, NewCol = NewRow + Drow, NewCol + Dcol
-    return Moves
+W_PAWN = 1
+W_ROOK = 2
+W_KNIGHT = 3
+W_BISHOP = 4
+W_QUEEN = 5
+W_KING = 6
 
-def QueenMoves(Pos, Board):
-    Moves = RookMoves(Pos, Board) + BishopMoves(Pos, Board)
-    return Moves
+B_PAWN = -1
+B_ROOK = -2
+B_KNIGHT = -3
+B_BISHOP = -4
+B_QUEEN = -5
+B_KING = -6
 
-def KingMoves(Pos, Board):
-    Moves = []
-    Row, Col = Pos
-    Directions = [(0,1), (0,-1), (1,0), (-1,0), (1,1), (1,-1), (-1,1), (-1,-1)]
+def get_basic_moves(piece, pos, board, castling_rights=None, en_passant=None):
+    """Get all possible moves without considering check"""
+    row, col = pos
+    moves = []
     
-    for Drow, Dcol in Directions:
-        NewRow, NewCol = Row + Drow, Col + Dcol
-        if 0 <= NewRow < 8 and 0 <= NewCol < 8:
-            Target = Board[NewRow][NewCol]
-            if Target == 'Empty' or Target[0] != Board[Row][Col][0]:
-                Moves.append((NewRow, NewCol))
-    return Moves
-
-def GetCastlingMoves(Pos, Board, CastlingRights, IsWhite):
-    Moves = []
-    Row = 7 if IsWhite else 0
-    
-    if Pos != (Row, 4):
-        return Moves
-        
-    if CastlingRights['kingside']:
-        if (Board[Row][5] == 'Empty' and 
-            Board[Row][6] == 'Empty' and 
-            Board[Row][7] == ('W' if IsWhite else 'B') + 'R'):
-            Moves.append((Row, 6))
-            
-    if CastlingRights['queenside']:
-        if (Board[Row][3] == 'Empty' and 
-            Board[Row][2] == 'Empty' and 
-            Board[Row][1] == 'Empty' and 
-            Board[Row][0] == ('W' if IsWhite else 'B') + 'R'):
-            Moves.append((Row, 2))
-    
-    print(f"Castling moves from {Pos}: {Moves}")
-    return Moves
-
-def HandleCastling(GameState, Kingside=True):
-    IsWhite = GameState.CurrentPlayer == 'White'
-    Row = 7 if IsWhite else 0
-    KingCol = 4
-    
-    if not GameState.CastlingRights[GameState.CurrentPlayer]['kingside' if Kingside else 'queenside']:
+    def is_valid_square(r, c, piece):
+        if 0 <= r < 8 and 0 <= c < 8:
+            if board[r][c] == 0:  # Empty square
+                return True
+            return (piece > 0 and board[r][c] < 0) or (piece < 0 and board[r][c] > 0)
         return False
-        
-    if IsInCheck(GameState.Board, IsWhite):
-        return False
-        
-    if Kingside:
-        if not all(GameState.Board[Row][Col] == 'Empty' for Col in [5, 6]):
-            return False
-        for Col in [4, 5, 6]:
-            if SquareUnderAttack(GameState.Board, (Row, Col), IsWhite):
-                return False
-        RookCol = 7
-        NewKingCol = 6
-        NewRookCol = 5
-    else:
-        if not all(GameState.Board[Row][Col] == 'Empty' for Col in [1, 2, 3]):
-            return False
-        for Col in [2, 3, 4]:
-            if SquareUnderAttack(GameState.Board, (Row, Col), IsWhite):
-                return False
-        RookCol = 0
-        NewKingCol = 2
-        NewRookCol = 3
-    
-    Color = 'W' if IsWhite else 'B'
-    GameState.Board[Row][NewKingCol] = Color + 'K'
-    GameState.Board[Row][NewRookCol] = Color + 'R'
-    GameState.Board[Row][KingCol] = 'Empty'
-    GameState.Board[Row][RookCol] = 'Empty'
-    
-    GameState.CastlingRights[GameState.CurrentPlayer]['kingside'] = False
-    GameState.CastlingRights[GameState.CurrentPlayer]['queenside'] = False
-    
-    return True
 
-def SquareUnderAttack(Board, Pos, IsWhite):
-    OpponentColor = 'B' if IsWhite else 'W'
-    for I in range(8):
-        for J in range(8):
-            Piece = Board[I][J]
-            if Piece != 'Empty' and Piece[0] == OpponentColor:
-                if Pos in GetValidMoves(Piece, (I,J), Board):
-                    return True
-    return False
+    # Pawn moves
+    if abs(piece) == 1:
+        direction = -1 if piece > 0 else 1
+        # Forward move
+        if 0 <= row + direction < 8 and board[row + direction][col] == 0:
+            moves.append((row + direction, col))
+            # Initial two-square move
+            if ((piece > 0 and row == 6) or (piece < 0 and row == 1)) and \
+               board[row + 2*direction][col] == 0:
+                moves.append((row + 2*direction, col))
+        
+        for dcol in [-1, 1]:
+            if 0 <= col + dcol < 8 and 0 <= row + direction < 8:
+                target = board[row + direction][col + dcol]
+                if (piece > 0 and target < 0) or (piece < 0 and target > 0):
+                    moves.append((row + direction, col + dcol))
+                
+        if en_passant and row == (3 if piece > 0 else 4):
+            if abs(col - en_passant[1]) == 1 and row == en_passant[0] - direction:
+                moves.append(en_passant)
 
-def IsInCheck(Board, IsWhite):
-    KingPiece = 'WK' if IsWhite else 'BK'
-    KingPos = None
-    for I in range(8):
-        for J in range(8):
-            if Board[I][J] == KingPiece:
-                KingPos = (I, J)
+    elif abs(piece) == 3:
+        knight_moves = [(2,1), (2,-1), (-2,1), (-2,-1), (1,2), (1,-2), (-1,2), (-1,-2)]
+        for dr, dc in knight_moves:
+            if is_valid_square(row + dr, col + dc, piece):
+                moves.append((row + dr, col + dc))
+
+    elif abs(piece) == 4:
+        directions = [(1,1), (1,-1), (-1,1), (-1,-1)]
+        for dr, dc in directions:
+            r, c = row + dr, col + dc
+            while is_valid_square(r, c, piece):
+                moves.append((r, c))
+                if board[r][c] != 0:
+                    break
+                r, c = r + dr, c + dc
+
+    elif abs(piece) == 2:
+        directions = [(0,1), (0,-1), (1,0), (-1,0)]
+        for dr, dc in directions:
+            r, c = row + dr, col + dc
+            while is_valid_square(r, c, piece):
+                moves.append((r, c))
+                if board[r][c] != 0:
+                    break
+                r, c = r + dr, c + dc
+
+    elif abs(piece) == 5:
+        directions = [(0,1), (0,-1), (1,0), (-1,0), (1,1), (1,-1), (-1,1), (-1,-1)]
+        for dr, dc in directions:
+            r, c = row + dr, col + dc
+            while is_valid_square(r, c, piece):
+                moves.append((r, c))
+                if board[r][c] != 0:
+                    break
+                r, c = r + dr, c + dc
+
+    elif abs(piece) == 6:
+        directions = [(0,1), (0,-1), (1,0), (-1,0), (1,1), (1,-1), (-1,1), (-1,-1)]
+        for dr, dc in directions:
+            if is_valid_square(row + dr, col + dc, piece):
+                moves.append((row + dr, col + dc))
+        if castling_rights:
+            is_white = piece > 0
+            base_row = 7 if is_white else 0
+            if row == base_row and col == 4:
+                if castling_rights['kingside'] and \
+                   all(board[base_row][c] == 0 for c in [5, 6]) and \
+                   board[base_row][7] == (W_ROOK if is_white else B_ROOK):
+                    moves.append((base_row, 6))
+                if castling_rights['queenside'] and \
+                   all(board[base_row][c] == 0 for c in [1, 2, 3]) and \
+                   board[base_row][0] == (W_ROOK if is_white else B_ROOK):
+                    moves.append((base_row, 2))
+
+    return moves
+
+def is_in_check(board, is_white, joker_mapping=None, moved_jokers=None):
+    """Check if the king is in check, considering joker pieces"""
+    king = W_KING if is_white else B_KING
+    king_pos = None
+    
+    # Find king position
+    for i in range(8):
+        for j in range(8):
+            if board[i][j] == king:
+                king_pos = (i, j)
                 break
-        if KingPos:
+        if king_pos:
             break
+            
+    if not king_pos:
+        return False
     
-    OpponentColor = 'B' if IsWhite else 'W'
-    for I in range(8):
-        for J in range(8):
-            Piece = Board[I][J]
-            if Piece != 'Empty' and Piece[0] == OpponentColor:
-                Moves = GetValidMoves(Piece, (I,J), Board)
-                if KingPos in Moves:
+    # Check for attacking pieces
+    for i in range(8):
+        for j in range(8):
+            piece = board[i][j]
+            if piece != 0 and ((is_white and piece < 0) or (not is_white and piece > 0)):
+                # Check if this piece is a joker
+                movement_type = None
+                if joker_mapping and moved_jokers:
+                    movement_type = get_piece_movement_type((i, j), joker_mapping, moved_jokers)
+                
+                if movement_type:
+                    # Use joker movement type
+                    piece_for_moves = movement_type if not is_white else -movement_type
+                    moves = get_basic_moves(piece_for_moves, (i, j), board)
+                else:
+                    # Use normal piece movement
+                    moves = get_basic_moves(piece, (i, j), board)
+                    
+                if king_pos in moves:
                     return True
     return False
 
-def IsCheckmate(Board, IsWhite):
-    if not IsInCheck(Board, IsWhite):
-        return False
-        
-    PlayerColor = 'W' if IsWhite else 'B'
-    for I in range(8):
-        for J in range(8):
-            Piece = Board[I][J]
-            if Piece != 'Empty' and Piece[0] == PlayerColor:
-                Moves = GetValidMoves(Piece, (I,J), Board)
-                for Move in Moves:
-                    TempBoard = Board.copy()
-                    TempBoard[Move[0]][Move[1]] = Piece
-                    TempBoard[I][J] = 'Empty'
-                    if not IsInCheck(TempBoard, IsWhite):
-                        return False
-    return True
+def get_valid_moves(piece, pos, board, castling_rights=None, en_passant=None):
+    """Get valid moves considering check"""
+    moves = get_basic_moves(piece, pos, board, castling_rights, en_passant)
+    valid_moves = []
+    is_white = piece > 0
+    row, col = pos
+    
+    for move in moves:
+        temp_board = board.copy()
+        temp_board[move[0]][move[1]] = piece
+        temp_board[row][col] = 0
+        if not is_in_check(temp_board, is_white):
+            valid_moves.append(move)
+            
+    return valid_moves
 

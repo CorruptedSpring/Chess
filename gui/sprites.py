@@ -1,27 +1,26 @@
 import pygame
+from pieces import *
 
-SquareSize = 80
-BoardSize = SquareSize * 8
-def LoadPieces():
-    Pieces = {}
-    PieceNames = {
-        'K': 'K',
-        'Q': 'Q',
-        'B': 'B',
-        'N': 'N',
-        'R': 'R',
-        'P': 'P'
+SQUARE_SIZE = 80
+BOARD_SIZE = SQUARE_SIZE * 8
+
+def load_pieces():
+    pieces = {}
+    piece_mapping = {
+        W_KING: 'WK', W_QUEEN: 'WQ', W_BISHOP: 'WB',
+        W_KNIGHT: 'WN', W_ROOK: 'WR', W_PAWN: 'WP',
+        B_KING: 'BK', B_QUEEN: 'BQ', B_BISHOP: 'BB',
+        B_KNIGHT: 'BN', B_ROOK: 'BR', B_PAWN: 'BP'
     }
     
-    for Color in ['W', 'B']:
-        for Code, Name in PieceNames.items():
-            ImagePath = f'gui/assets/{Color}{Name}.png'
-            Image = pygame.image.load(ImagePath)
-            Image = pygame.transform.scale(Image, (SquareSize, SquareSize))
-            Pieces[Color + Code] = Image
-            
-    return Pieces
+    for piece_num, piece_name in piece_mapping.items():
+        image_path = f'gui/assets/{piece_name}.png'
+        image = pygame.image.load(image_path)
+        image = pygame.transform.scale(image, (SQUARE_SIZE, SQUARE_SIZE))
+        pieces[piece_num] = image
+    
+    return pieces
 
-def GetSquareFromMouse(Pos):
-    X, Y = Pos
-    return (Y // SquareSize, X // SquareSize)
+def get_square_from_mouse(pos):
+    x, y = pos
+    return (y // SQUARE_SIZE, x // SQUARE_SIZE)
